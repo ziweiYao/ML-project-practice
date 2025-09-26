@@ -22,6 +22,7 @@ def createMerge_df():
             'products': 'product_id',
     }
     #name the df keys
+    products_df = products_df.merge( product_category_name_translation_df, on='product_category_name', how='left', suffixes=('', '_dup'))    
     allDatas = {
         'customers_dataset': customers_df,
         'order_items': order_items_df,
@@ -32,16 +33,17 @@ def createMerge_df():
         'products': products_df,
         'product_category_name_translation': product_category_name_translation_df
     }
-    for name, key in merge_keys.items():
-        if name in allDatas:
-            df = pd.merge(df, allDatas[name], on=key, how='left')
+    for key, dfs in merge_keys.items():
+        if key in allDatas:
+            df = pd.merge(df, allDatas[key], on=dfs, how='left')
     return df
+
 
 
 def dropNull(df):
     required_non_null_percentage = int(input("enter the minimum percentage of null value you want ___%   \ntype between 100 to 0:"))
     required_non_null_percentage = required_non_null_percentage / 100
-    if 0 <= required_non_null_percentage <= 100 :
+    if 0 <= required_non_null_percentage <= 1 :
         # Calculate the threshold (minimum number of non-null values)
         threshold_value = int(len(df.columns) * required_non_null_percentage)
         df = df.dropna(thresh=threshold_value, axis=0)
@@ -50,13 +52,29 @@ def dropNull(df):
         df = df.dropna(thresh=threshold_value, axis=0)
     return df
 
-
 def date_time_convert(df,datetime_cols):
     df = df.copy()
     for col in datetime_cols:
         df[col] = pd.to_datetime(df[col], errors='coerce')
     return df
 
+def GeoString_in_frequency(df, cols):
+    #convert the string type value in frequency in percentage， in order to make meaningful analysis
+    #higher frequency for a city and zip code means more customer in that city or zone
+    df = df.copy()
+    col_length = len(df)
+
+    #do all col in the list of cols
+    for col in cols:
+        if col not in df.columns:
+            raise KeyError(f"Column '{col}' not in DataFrame")
+
+        #count numbers for the attribute
+        attributeValue_count = df[col].value_counts(dropna=False)
+        #calculate and add freq version for each address attribute
+        df[f"{col}_freq"] = df[col].map( attributeValue_count / col_length).astype("float64")
+
+    return df
 
 def preprocessing(df):
     #eliminate null values
@@ -69,24 +87,36 @@ def preprocessing(df):
     
     df['delivery_time'] = (df['order_delivered_customer_date'] - df['order_approved_at']).dt.days
     df['order_processing_time'] = (df['order_approved_at'] - df['order_purchase_timestamp']).dt.days
-    df['estimated_minus_actual_shipping'] = (df['order_estimated_delivery_date'] - df['order_delivered_customer_date']).dt.days
+    df['time_of_delay'] = (df['order_estimated_delivery_date'] - df['order_delivered_customer_date']).dt.days
     df['product_volume'] = (df['product_length_cm'] * df['product_width_cm'] * df['product_height_cm'])
     df['product_size_score'] = df['product_volume'] / df['product_volume'].max()
     df['satisfaction'] = (df['review_score'] >= df['review_score'].mean()).astype(int)
     df['order_total_price'] = df['price'] + df['freight_value']
     df['late_delivery'] = (df['order_delivered_customer_date'] > df['order_estimated_delivery_date']).astype(int)
     
-    obsolete_cols = ['order_delivered_customer_date', 'order_approved_at', 'order_approved_at',
-                     'order_estimated_delivery_date',  'product_length_cm', 'product_width_cm', 
-                     'product_height_cm', 'product_volume', 'review_score' ]
-    
+    #select those cols that were used for new cols, and drop them
+    obsolete_cols = ['order_delivered_customer_date', 'order_approved_at', 'order_approved_at', 'order_delivered_carrier_date',
+                     'order_estimated_delivery_date',  'product_length_cm', 'product_width_cm', 'order_status',
+                     'product_height_cm', 'product_volume', 'review_score', 'order_id', 'customer_id', 'product_id', 'review_id', 'seller_id', 'order_item_id',
+                     'customer_unique_id', 'review_comment_message', 'review_creation_date', 'review_answer_timestamp', 'review_comment_title']
     df.drop(columns = obsolete_cols, inplace=True)
     #df.info()
     
+    #convert address to frequency and drop original address as they don't have actual meaning when we treat them  as numbers.
+    string_cols = ['customer_city', 'seller_state', 'seller_city', 'customer_state', 'customer_zip_code_prefix','seller_zip_code_prefix']
+    df = GeoString_in_frequency(df,string_cols)
+    df.drop(columns = string_cols, inplace=True)
     return df
 
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 def generateHeatMap(df):
+    #calculate correlation of df
+    corr_matrix = df.corr(numeric_only=True)
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+    plt.title("Correlation Heatmap of satisfaction")
+    plt.show()
     return 0
  
 
@@ -98,8 +128,11 @@ def generateHeatMap(df):
 #create dataframe for the ml
 df = createMerge_df()
 df = preprocessing(df)
+
 #generate Heat map to see the relation between attributes
 generateHeatMap(df)
- 
+#We found the relation between 
+
+
 #write the data into local for checking or future use. 
 df.to_csv('data.csv', index=False)
