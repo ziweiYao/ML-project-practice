@@ -76,6 +76,10 @@ def GeoString_in_frequency(df, cols):
 
     return df
 
+def binary_Satisfaction(df):
+    df['satisfaction'] = (df['satisfaction'] >= df['satisfaction'].mean()).astype(int)
+    return df
+
 def preprocessing(df):
     #eliminate null values
     #df.info()
@@ -84,15 +88,14 @@ def preprocessing(df):
                     'order_delivered_customer_date', 'order_estimated_delivery_date', 
                     'shipping_limit_date', 'review_creation_date', 'review_answer_timestamp']
     df = date_time_convert(df,datetime_cols)
-    
     df['delivery_time'] = (df['order_delivered_customer_date'] - df['order_approved_at']).dt.days
     df['order_processing_time'] = (df['order_approved_at'] - df['order_purchase_timestamp']).dt.days
     df['time_of_delay'] = (df['order_estimated_delivery_date'] - df['order_delivered_customer_date']).dt.days
-    df['product_volume'] = (df['product_length_cm'] * df['product_width_cm'] * df['product_height_cm'])
-    df['product_size_score'] = df['product_volume'] / df['product_volume'].max()
-    df['satisfaction'] = (df['review_score'] >= df['review_score'].mean()).astype(int)
     df['order_total_price'] = df['price'] + df['freight_value']
     df['late_delivery'] = (df['order_delivered_customer_date'] > df['order_estimated_delivery_date']).astype(int)
+    df['product_volume'] = (df['product_length_cm'] * df['product_width_cm'] * df['product_height_cm'])
+    df['product_size_score'] = (df['product_volume'] / df['product_volume'].max())
+    df['satisfaction'] = df['review_score']
     
     #select those cols that were used for new cols, and drop them
     obsolete_cols = ['order_delivered_customer_date', 'order_approved_at', 'order_approved_at', 'order_delivered_carrier_date',
