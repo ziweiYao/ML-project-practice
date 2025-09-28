@@ -1,4 +1,5 @@
 import pandas as pd
+import alg1
 
 def createMerge_df():
     #first, read all data set as dataframes.
@@ -84,6 +85,7 @@ def preprocessing(df):
     #eliminate null values
     #df.info()
     df = dropNull(df)
+    
     datetime_cols = ['order_purchase_timestamp', 'order_approved_at', 'order_delivered_carrier_date', 
                     'order_delivered_customer_date', 'order_estimated_delivery_date', 
                     'shipping_limit_date', 'review_creation_date', 'review_answer_timestamp']
@@ -95,10 +97,14 @@ def preprocessing(df):
     df['late_delivery'] = (df['order_delivered_customer_date'] > df['order_estimated_delivery_date']).astype(int)
     df['product_volume'] = (df['product_length_cm'] * df['product_width_cm'] * df['product_height_cm'])
     df['product_size_score'] = (df['product_volume'] / df['product_volume'].max())
-    df['satisfaction'] = df['review_score']
+    df['satisfaction'] = (df['review_score']/5)
     
+    #change date time to week in year
+    df['order_approved_at'] = pd.to_datetime(df['order_approved_at'])
+    df['week_year'] = df['order_approved_at'].dt.strftime('%Y-%U')
+
     #select those cols that were used for new cols, and drop them
-    obsolete_cols = ['order_delivered_customer_date', 'order_approved_at', 'order_approved_at', 'order_delivered_carrier_date',
+    obsolete_cols = ['order_delivered_customer_date', 'order_delivered_carrier_date', 'order_approved_at',
                      'order_estimated_delivery_date',  'product_length_cm', 'product_width_cm', 'order_status',
                      'product_height_cm', 'product_volume', 'review_score', 'order_id', 'customer_id', 'product_id', 'review_id', 'seller_id', 'order_item_id',
                      'customer_unique_id', 'review_comment_message', 'review_creation_date', 'review_answer_timestamp', 'review_comment_title']
@@ -131,9 +137,11 @@ def generateHeatMap(df):
 #create dataframe for the ml
 df = createMerge_df()
 df = preprocessing(df)
-
+#df = binary_Satisfaction(df)
 #generate Heat map to see the relation between attributes
 generateHeatMap(df)
+alg1.run_linear_regression()
+
 #We found the relation between 
 
 
