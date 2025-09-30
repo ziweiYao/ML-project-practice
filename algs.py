@@ -1,6 +1,8 @@
 # alg1.py
 import pandas as pd
+
 import numpy as np
+
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -11,6 +13,26 @@ from sklearn.metrics import mean_squared_error, r2_score
 def run_linear_regression():
     # Load the dataset
     df1 = pd.read_csv("data.csv")
+
+    #change time to year_which week in the year
+    # Adding more features for analysis: Average time to delivery and order value per week
+    weekly_features = df.groupby('week_year').agg({
+        'delivery_time': 'mean',
+        'order_total_price': 'mean',
+        'product_size_score': 'mean',
+        'satisfaction': 'mean',
+        'customer_city_freq': 'mean',
+        'seller_state_freq' : 'mean'
+        
+    }).reset_index()
+    
+    from sklearn.preprocessing import MinMaxScaler
+    scaler = MinMaxScaler()
+    df = weekly_features.copy()
+    df[['delivery_time', 'order_total_price','product_size_score', 'satisfaction', 'customer_city_freq', 'seller_state_freq']] = scaler.fit_transform(
+        df[['delivery_time', 'order_total_price','product_size_score', 'satisfaction', 'customer_city_freq', 'seller_state_freq']]
+    )
+
     # Updated feature set (all numeric)
     features = [
         'order_total_price',
@@ -26,6 +48,7 @@ def run_linear_regression():
     # Train/test split
     X = df1[features]
     y = df1[target]
+
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=423)
 
@@ -55,6 +78,7 @@ def run_linear_regression():
     # Metrics
     print("R² Score:", r2_score(y_test, y_pred))
     print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
+
 
 
 import sklearn.tree
@@ -107,4 +131,3 @@ def run_random_forest_decisiontree(df):
 
 if __name__ == "__main__":
     run_linear_regression()
-    
