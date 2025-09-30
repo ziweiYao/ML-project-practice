@@ -1,5 +1,8 @@
 # alg1.py
 import pandas as pd
+
+import numpy as np
+
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -9,7 +12,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 # Baseline linear regression
 def run_linear_regression():
     # Load the dataset
-    df = pd.read_csv("data.csv")
+    df1 = pd.read_csv("data.csv")
 
     #change time to year_which week in the year
     # Adding more features for analysis: Average time to delivery and order value per week
@@ -43,8 +46,9 @@ def run_linear_regression():
 
 
     # Train/test split
-    X = df[features]
-    y = df[target]
+    X = df1[features]
+    y = df1[target]
+
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=423)
 
@@ -75,6 +79,55 @@ def run_linear_regression():
     print("R² Score:", r2_score(y_test, y_pred))
     print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
 
+
+
+import sklearn.tree
+from sklearn.ensemble import RandomForestRegressor
+def run_random_forest_decisiontree(df):
+    df2 = df.copy()
+    target = 'satisfaction'
+    
+    features = [
+        'order_total_price',
+        'product_size_score',
+        'customer_city_freq',
+        'seller_state_freq',
+        'delivery_time'
+    ]
+    X = df2[features]
+    y = df2[target].astype(float)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Initialize the Random Forest Regressor(100 trees)
+    rf_regressor = RandomForestRegressor(n_estimators=100, random_state=42)
+
+    # Train the model
+    rf_regressor.fit(X_train, y_train)
+
+    # Make predictions on the test set
+    y_pred = rf_regressor.predict(X_test)
+
+    # Evaluate the model performance
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    # -------------------------------
+    # Comparison of pred and true label
+    # -------------------------------
+
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_test, y_pred, alpha=0.7, label='Data Points')
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='red', linestyle='--', label='Ideal Fit (y=x)')
+    plt.xlabel("Actual Satisfaction")
+    plt.ylabel("Predicted Satisfaction")
+    plt.title("Random Forest Regression: Actual vs. Predicted Satisfaction")
+    plt.legend()
+    plt.show()
+
+    print("Random Forest Regression Results:")
+    print("Mean Squared Error:", mse)
+    print("R² Score:", r2)
+
 if __name__ == "__main__":
     run_linear_regression()
-   

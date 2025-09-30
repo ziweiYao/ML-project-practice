@@ -1,5 +1,5 @@
 import pandas as pd
-import alg1
+import algs
 
 def createMerge_df():
     #first, read all data set as dataframes.
@@ -81,6 +81,28 @@ def binary_Satisfaction(df):
     df['satisfaction'] = (df['satisfaction'] >= df['satisfaction'].mean()).astype(int)
     return df
 
+
+def change_time_to_weeks(df):
+    #change time to year_which week in the year
+    # Adding more features for analysis: Average time to delivery and order value per week
+    weekly_features = df.groupby('week_year').agg({
+        'delivery_time': 'mean',
+        'order_total_price': 'mean',
+        'product_size_score': 'mean',
+        'satisfaction': 'mean',
+        'customer_city_freq': 'mean',
+        'seller_state_freq' : 'mean'
+    }).reset_index()
+    
+    from sklearn.preprocessing import MinMaxScaler
+    scaler = MinMaxScaler()
+    df = weekly_features.copy()
+    df[['delivery_time', 'order_total_price','product_size_score', 'satisfaction', 'customer_city_freq', 'seller_state_freq']] = scaler.fit_transform(
+        df[['delivery_time', 'order_total_price','product_size_score', 'satisfaction', 'customer_city_freq', 'seller_state_freq']]
+    )
+
+    return df
+
 def preprocessing(df):
     #eliminate null values
     #df.info()
@@ -114,8 +136,11 @@ def preprocessing(df):
     #convert address to frequency and drop original address as they don't have actual meaning when we treat them  as numbers.
     string_cols = ['customer_city', 'seller_state', 'seller_city', 'customer_state', 'customer_zip_code_prefix','seller_zip_code_prefix']
     df = GeoString_in_frequency(df,string_cols)
-    df.drop(columns = string_cols, inplace=True)
+    generateHeatMap(df)
+    df = change_time_to_weeks(df)
+    generateHeatMap(df)
     return df
+
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -139,11 +164,10 @@ df = createMerge_df()
 df = preprocessing(df)
 #df = binary_Satisfaction(df)
 #generate Heat map to see the relation between attributes
-generateHeatMap(df)
-alg1.run_linear_regression()
-
+df.to_csv('data.csv', index=False)
+algs.run_linear_regression()
+algs.run_random_forest_decisiontree(df)
 #We found the relation between 
 
 
 #write the data into local for checking or future use. 
-df.to_csv('data.csv', index=False)
