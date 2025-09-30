@@ -10,9 +10,9 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 
 # Baseline linear regression
-def run_linear_regression():
+def run_linear_regression(df):
     # Load the dataset
-    df1 = pd.read_csv("data.csv")
+    df1 = df.copy()
 
     #change time to year_which week in the year
     # Adding more features for analysis: Average time to delivery and order value per week

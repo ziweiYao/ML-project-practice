@@ -137,6 +137,7 @@ def preprocessing(df):
     string_cols = ['customer_city', 'seller_state', 'seller_city', 'customer_state', 'customer_zip_code_prefix','seller_zip_code_prefix']
     df = GeoString_in_frequency(df,string_cols)
     generateHeatMap(df)
+    df.to_csv('data.csv', index=False)
     df = change_time_to_weeks(df)
     generateHeatMap(df)
     return df
@@ -164,8 +165,7 @@ df = createMerge_df()
 df = preprocessing(df)
 #df = binary_Satisfaction(df)
 #generate Heat map to see the relation between attributes
-df.to_csv('data.csv', index=False)
-algs.run_linear_regression()
+algs.run_linear_regression(df)
 algs.run_random_forest_decisiontree(df)
 #We found the relation between 
 
