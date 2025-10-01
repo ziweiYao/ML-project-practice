@@ -167,7 +167,6 @@ df = preprocessing(df)
 #generate Heat map to see the relation between attributes
 algs.run_linear_regression(df)
 algs.run_random_forest_decisiontree(df)
-#We found the relation between 
 
 
 #write the data into local for checking or future use. 
