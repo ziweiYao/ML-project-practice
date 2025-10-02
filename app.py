@@ -12,7 +12,7 @@ def createMerge_df():
     products_df = pd.read_csv('./Data/olist_products_dataset.csv')
     product_category_name_translation_df = pd.read_csv('./Data/product_category_name_translation.csv')
 
-        
+
     df = pd.merge(orders_df,customers_df , on='customer_id', how='left')
     #determine the key for join
     merge_keys = {
@@ -23,7 +23,7 @@ def createMerge_df():
             'products': 'product_id',
     }
     #name the df keys
-    products_df = products_df.merge( product_category_name_translation_df, on='product_category_name', how='left', suffixes=('', '_dup'))    
+    products_df = products_df.merge( product_category_name_translation_df, on='product_category_name', how='left', suffixes=('', '_dup'))
     allDatas = {
         'customers_dataset': customers_df,
         'order_items': order_items_df,
@@ -93,7 +93,7 @@ def change_time_to_weeks(df):
         'customer_city_freq': 'mean',
         'seller_state_freq' : 'mean'
     }).reset_index()
-    
+
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
     df = weekly_features.copy()
@@ -107,9 +107,9 @@ def preprocessing(df):
     #eliminate null values
     #df.info()
     df = dropNull(df)
-    
-    datetime_cols = ['order_purchase_timestamp', 'order_approved_at', 'order_delivered_carrier_date', 
-                    'order_delivered_customer_date', 'order_estimated_delivery_date', 
+
+    datetime_cols = ['order_purchase_timestamp', 'order_approved_at', 'order_delivered_carrier_date',
+                    'order_delivered_customer_date', 'order_estimated_delivery_date',
                     'shipping_limit_date', 'review_creation_date', 'review_answer_timestamp']
     df = date_time_convert(df,datetime_cols)
     df['delivery_time'] = (df['order_delivered_customer_date'] - df['order_approved_at']).dt.days
@@ -120,7 +120,7 @@ def preprocessing(df):
     df['product_volume'] = (df['product_length_cm'] * df['product_width_cm'] * df['product_height_cm'])
     df['product_size_score'] = (df['product_volume'] / df['product_volume'].max())
     df['satisfaction'] = (df['review_score']/5)
-    
+
     #change date time to week in year
     df['order_approved_at'] = pd.to_datetime(df['order_approved_at'])
     df['week_year'] = df['order_approved_at'].dt.strftime('%Y-%U')
@@ -132,7 +132,7 @@ def preprocessing(df):
                      'customer_unique_id', 'review_comment_message', 'review_creation_date', 'review_answer_timestamp', 'review_comment_title']
     df.drop(columns = obsolete_cols, inplace=True)
     #df.info()
-    
+
     #convert address to frequency and drop original address as they don't have actual meaning when we treat them  as numbers.
     string_cols = ['customer_city', 'seller_state', 'seller_city', 'customer_state', 'customer_zip_code_prefix','seller_zip_code_prefix']
     df = GeoString_in_frequency(df,string_cols)
@@ -153,7 +153,7 @@ def generateHeatMap(df):
     plt.title("Correlation Heatmap of satisfaction")
     plt.show()
     return 0
- 
+
 
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -166,7 +166,8 @@ df = preprocessing(df)
 #df = binary_Satisfaction(df)
 #generate Heat map to see the relation between attributes
 algs.run_linear_regression(df)
+algs.run_decision_tree(df)
 algs.run_random_forest_decisiontree(df)
 
 
-#write the data into local for checking or future use. 
+#write the data into local for checking or future use.
