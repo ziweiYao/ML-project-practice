@@ -23,9 +23,9 @@ def run_linear_regression(df):
         'satisfaction': 'mean',
         'customer_city_freq': 'mean',
         'seller_state_freq' : 'mean'
-        
+
     }).reset_index()
-    
+
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
     df = weekly_features.copy()
@@ -55,7 +55,7 @@ def run_linear_regression(df):
     # Train the model
     model = LinearRegression()
     model.fit(X_train, y_train)
-    
+
     # Predict
     y_pred = model.predict(X_test)
 
@@ -80,13 +80,64 @@ def run_linear_regression(df):
     print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
 
 
+# Decision Tree as alg2
+from sklearn.tree import DecisionTreeRegressor
+def run_decision_tree(df):
+    df2 = df.copy()
+
+    # Extract year from 'week_year'
+    df2['year'] = df2['week_year'].apply(lambda x: int(str(x)[:4]))
+
+    # Feature columns
+    features = [
+        'order_total_price',
+        'product_size_score',
+        'customer_city_freq',
+        'seller_state_freq',
+        'delivery_time',
+        'year'
+    ]
+
+    target = 'satisfaction'
+
+    X = df2[features]
+    y = df2[target].astype(float)
+
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import mean_squared_error, r2_score
+    import matplotlib.pyplot as plt
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Train Decision Tree with controlled depth to reduce overfitting
+    model = DecisionTreeRegressor(max_depth=7, random_state=42)
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    # Plot predictions
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_test, y_pred, alpha=0.6)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
+    plt.xlabel("Actual Satisfaction")
+    plt.ylabel("Predicted Satisfaction")
+    plt.title("Decision Tree Regression (Actual vs Predicted)")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    print("Decision Tree Regression Results:")
+    print("R² Score:", r2_score(y_test, y_pred))
+    print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
+
+
 
 import sklearn.tree
 from sklearn.ensemble import RandomForestRegressor
 def run_random_forest_decisiontree(df):
-    df2 = df.copy()
+    df3 = df.copy()
     target = 'satisfaction'
-    
+
     features = [
         'order_total_price',
         'product_size_score',
@@ -94,8 +145,9 @@ def run_random_forest_decisiontree(df):
         'seller_state_freq',
         'delivery_time'
     ]
-    X = df2[features]
-    y = df2[target].astype(float)
+
+    X = df3[features]
+    y = df3[target].astype(float)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
